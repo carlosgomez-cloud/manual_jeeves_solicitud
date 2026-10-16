@@ -231,7 +231,7 @@ details ul{margin:0 0 14px;padding-left:18px;color:var(--muted)}
     <div>
       <div class="brand"><span class="mark"><svg width="24" height="24" viewBox="76 74 197 200" fill="#C2AB6D" aria-hidden="true"><path d="m149.3,178.61h50.39l-7.39-55.71c18.18-1.74,36.37-3.47,54.55-5.21-12.32-13.05-24.63-26.09-36.95-39.14l-35.4,29.84-35.4-29.84c-12.32,13.05-24.63,26.09-36.95,39.14,18.18,1.74,36.37,3.47,54.55,5.21l-7.39,55.71Z"/><path d="M136.43 142.93 96.62 123.51 80.35 140.77 136.03 186.86 136.43 142.93Z"/><path d="m168.35,213.73l-29.96-24.91-19.77,19.98c5.12,9.28,12.08,21.87,17.19,31.15,11.46-4.63,21.07-12.55,32.53-17.18v-9.04Z"/><path d="m141.52,250.13c1.41,5.24,2.81,10.48,4.22,15.72l7.13,4.58h43.24l7.13-4.58c1.41-5.24,2.81-10.48,4.22-15.72-10.99-2.57-21.98-5.13-32.97-7.7-10.99,2.57-21.98,5.13-32.97,7.7Z"/><path d="M212.95 186.86 268.63 140.77 252.37 123.51 212.56 142.93 212.95 186.86Z"/><path d="m180.63,213.73v9.04c11.46,4.63,20.68,12.55,32.14,17.18,5.12-9.28,12.47-21.87,17.59-31.15l-19.77-19.98-29.96,24.91Z"/></svg></span>Manual del usuario Jeeves <span class="pill" style="margin-left:4px;font-family:var(--f-body);letter-spacing:0">Solicitud de tarjeta</span></div>
       <h1>Tu app y tu tarjeta Jeeves, paso a paso</h1>
-      <p class="lede">Configura la app en tu celular, solicita tu tarjeta, pide el envío y actívala si es física, y aprende a gestionarla. Marca cada paso cuando lo completes; tu avance queda guardado en este navegador.</p>
+      <p class="lede">Configura la app en tu celular, solicita tu tarjeta, pide el envío y actívala si es física, y aprende a gestionarla. Marca cada paso cuando lo completes para ver tu avance.</p>
     </div>
     <div class="progress" aria-live="polite">
       <div class="lbl"><span>Tu avance</span><b id="pct">0 de 18 pasos</b></div>
@@ -472,9 +472,9 @@ function bindAnim(){
 
 const KEY='jeeves-manual-solicitud-v1';
 let state={cur:0,done:[]};
-try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&Array.isArray(s.done)) state=s;}catch(e){}
+try{localStorage.removeItem(KEY)}catch(e){} // siempre inicia en el paso 1
 if(state.cur<0||state.cur>=STEPS.length) state.cur=0;
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const save=()=>{};
 const isDone=i=>state.done.includes(i);
 
 const $=id=>document.getElementById(id);
