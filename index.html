@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solicita tu Jeeves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: guided stepper. Left column = instructions for the current step, right column = a live device mock (phone or browser) that changes with the step. */
+:root{
+  --bg:#F4F4F1; --surface:#FFFFFF; --ink:#15161A; --muted:#62646C; --line:#E2E2DC;
+  --gold:#A8832A; --gold-soft:#F3EBD6; --ok:#1F8A5B; --ok-soft:#E1F3EA; --warn:#B4541A; --warn-soft:#FBEBDD;
+  --device:#101114; --screen:#FFFFFF; --screen-ink:#15161A; --screen-muted:#8A8C93; --screen-line:#ECECE8;
+  --f-display:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1013; --surface:#17181C; --ink:#EDEDEA; --muted:#A2A4AB; --line:#2A2B31;
+  --gold:#D9B45A; --gold-soft:#2C2616; --ok:#4CC38A; --ok-soft:#14281F; --warn:#F0A060; --warn-soft:#2E1F14;
+  --device:#000000; --screen:#1C1D22; --screen-ink:#EDEDEA; --screen-muted:#8E9097; --screen-line:#2B2C32; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1013; --surface:#17181C; --ink:#EDEDEA; --muted:#A2A4AB; --line:#2A2B31;
+  --gold:#D9B45A; --gold-soft:#2C2616; --ok:#4CC38A; --ok-soft:#14281F; --warn:#F0A060; --warn-soft:#2E1F14;
+  --device:#000000; --screen:#1C1D22; --screen-ink:#EDEDEA; --screen-muted:#8E9097; --screen-line:#2B2C32; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:600;letter-spacing:.02em}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--ink);display:grid;place-items:center}
+.mark svg{width:20px;height:20px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.2vw,42px);line-height:1.1;margin:14px 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:60ch;margin:0}
+.progress{min-width:240px;flex:0 1 300px}
+.progress .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.progress .lbl b{color:var(--ink);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:99px;transition:width .4s ease}
+
+/* prereq */
+.prereq{display:flex;gap:12px;align-items:flex-start;background:var(--gold-soft);border-radius:12px;padding:14px 16px;margin-bottom:22px;font-size:15px}
+.prereq svg{flex:none;margin-top:2px}
+
+/* stage tabs */
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.stage{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;min-width:0}
+.stage:hover{border-color:var(--muted)}
+.stage[aria-selected="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.stage .n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:600;font-size:14px;background:var(--bg);border:1px solid var(--line)}
+.stage.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.stage .t{min-width:0}
+.stage .t b{display:block;font-weight:600;font-size:15px;line-height:1.25}
+.stage .t span{font-size:13px;color:var(--muted)}
+
+/* main grid */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;min-width:0}
+.steplist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.dot{all:unset;cursor:pointer;height:30px;min-width:30px;padding:0 8px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;border:1px solid var(--line);color:var(--muted)}
+.dot.done{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.dot[aria-current="step"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 6px}
+h2{font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.2;margin:0 0 10px;text-wrap:balance}
+.intro{color:var(--muted);margin:0 0 16px;max-width:62ch}
+ol.do{margin:0 0 16px;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+ol.do li{counter-increment:s;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+ol.do li::before{content:counter(s);width:24px;height:24px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:1px}
+.btnname{font-weight:600;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:0 6px;white-space:nowrap}
+.note{border-radius:10px;padding:12px 14px;font-size:14.5px;margin:0 0 12px;display:flex;gap:10px}
+.note.tip{background:var(--ok-soft)}
+.note.warn{background:var(--warn-soft)}
+.note strong{font-weight:700}
+.note.info{background:var(--gold-soft);border:1px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+.opt{display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start;border:1px solid var(--screen-line);border-radius:10px;padding:8px 10px;font-size:11.5px}
+.opt.sel{border-color:var(--screen-ink);box-shadow:0 0 0 1px var(--screen-ink)}
+.opt b{font-size:12px;display:block}
+.opt ul{margin:2px 0 0;padding-left:14px;color:var(--screen-muted);font-size:10.5px;line-height:1.35}
+.thumb{width:38px;height:24px;border-radius:4px;margin-top:2px;position:relative;border:1px solid var(--screen-line)}
+.thumb::after{content:"";position:absolute;right:3px;bottom:3px;width:9px;height:6px;border-radius:3px;background:linear-gradient(90deg,#EB001B 50%,#F79E1B 50%)}
+.thumb.phys{background:#111;border-color:#C9A84C}
+.thumb.virt{background:#fff}
+.thumb.we{background:linear-gradient(135deg,#000,#2a2a2a);border-color:#D9B45A}
+.wepill{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--gold-soft);color:var(--gold);margin-left:4px;vertical-align:1px}
+.dd{border:1px solid var(--screen-line);border-radius:10px;overflow:hidden;font-size:11.5px}
+.dd div{padding:6px 10px;border-bottom:1px solid var(--screen-line)}
+.dd div:last-child{border-bottom:0}
+.dd .on{background:var(--screen-line);font-weight:700}
+.upl{border:1px dashed var(--screen-muted);border-radius:10px;padding:10px;text-align:center;font-size:11px;color:var(--screen-muted)}
+.upl b{color:#6A5ACD}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.lnk{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:600;font-size:14px;background:var(--bg)}
+.lnk:hover{border-color:var(--ink)}
+.video{display:flex;gap:14px;align-items:center;text-decoration:none;background:var(--ink);color:var(--bg);border-radius:14px;padding:14px;margin:0 0 16px}
+.video .play{flex:none;width:52px;height:52px;border-radius:50%;background:var(--gold);display:grid;place-items:center}
+.video b{display:block;font-size:15.5px}
+.video span{font-size:13px;opacity:.75}
+.foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;margin-top:8px}
+.check{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;user-select:none}
+.check input{width:20px;height:20px;accent-color:var(--ok)}
+.nav{display:flex;gap:8px}
+.btn{all:unset;cursor:pointer;padding:10px 16px;border-radius:10px;font-weight:600;font-size:15px;border:1px solid var(--line)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[disabled]{opacity:.35;cursor:default}
+
+/* device */
+.devicewrap{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;align-items:center;gap:10px}
+.phone{width:290px;max-width:100%;aspect-ratio:9/18.5;background:var(--device);border-radius:42px;padding:11px;box-shadow:0 20px 50px -20px rgba(0,0,0,.35)}
+.browser{width:340px;max-width:100%;background:var(--device);border-radius:14px;padding:8px 8px 8px;box-shadow:0 20px 50px -20px rgba(0,0,0,.35)}
+.browser .chrome{display:flex;gap:5px;align-items:center;padding:2px 6px 8px}
+.browser .chrome i{width:8px;height:8px;border-radius:50%;background:#555}
+.browser .chrome span{margin-left:8px;flex:1;background:#2a2b30;color:#aaa;font-size:10px;border-radius:5px;padding:3px 8px;font-family:var(--f-mono)}
+.screen{background:var(--screen);color:var(--screen-ink);height:100%;border-radius:32px;overflow:hidden;display:flex;flex-direction:column;font-size:13px;position:relative}
+.browser .screen{border-radius:8px;min-height:360px}
+.sbar{display:flex;justify-content:space-between;padding:12px 22px 6px;font-size:11px;font-weight:600}
+.scontent{flex:1;padding:10px 18px 18px;display:flex;flex-direction:column;gap:10px;animation:in .35s ease}
+@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.scontent{animation:none}.bar i{transition:none}}
+.s-h{font-family:var(--f-display);font-weight:600;font-size:17px;margin:4px 0 0}
+.s-sub{color:var(--screen-muted);font-size:12px;margin:0}
+.s-field{border:1px solid var(--screen-line);border-radius:10px;padding:9px 11px;font-size:12.5px}
+.s-field small{display:block;color:var(--screen-muted);font-size:10.5px}
+.s-btn{background:var(--screen-ink);color:var(--screen);text-align:center;border-radius:10px;padding:10px;font-weight:600;font-size:13px}
+.s-btn.gold{background:var(--gold);color:#15161A}
+.s-btn.ghost{background:transparent;color:var(--screen-ink);border:1px solid var(--screen-line)}
+.s-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--screen-line)}
+.s-row:last-child{border-bottom:0}
+.otp{display:flex;gap:6px;justify-content:center}
+.otp span{width:34px;height:42px;border:1px solid var(--screen-line);border-radius:8px;display:grid;place-items:center;font-family:var(--f-mono);font-size:16px}
+.otp span.f{border-color:var(--gold)}
+.card{aspect-ratio:1.586;border-radius:12px;background:linear-gradient(135deg,#1b1c20,#2d2e34);color:#f1e7cc;padding:12px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;position:relative;overflow:hidden}
+.card .num{font-family:var(--f-mono);letter-spacing:.08em;font-size:12.5px}
+.card.frozen{filter:grayscale(1) brightness(.85)}
+.card .ice{position:absolute;inset:0;display:grid;place-items:center;background:rgba(160,200,230,.25);font-weight:700;color:#fff;font-size:13px}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--ok-soft);color:var(--ok)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.toggle{width:36px;height:20px;border-radius:99px;background:var(--screen-line);position:relative;flex:none}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.toggle.on{background:var(--ok)}
+.toggle.on::after{left:18px}
+.push{background:var(--screen);border:1px solid var(--screen-line);border-radius:16px;padding:12px;box-shadow:0 8px 24px -10px rgba(0,0,0,.35)}
+.tap{position:relative}
+.tap::after{content:"";position:absolute;right:14px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;border:2px solid var(--gold);animation:pulse 1.4s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.tap::after{animation:none}}
+.caption{font-size:12px;color:var(--muted);text-align:center;max-width:300px}
+.kind{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* animated walkthrough */
+.player{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px;display:grid;gap:12px}
+.pctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ptime{margin-left:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ptrack{display:flex;gap:4px}
+.ptrack span{flex:1;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.ptrack i{display:block;height:100%;width:0;background:var(--gold)}
+.scenes{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.scene{all:unset;cursor:pointer;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;padding:7px 8px;border-radius:8px;font-size:14.5px;color:var(--muted);width:100%;box-sizing:border-box}
+.scene:hover{background:var(--surface)}
+.scene .sn{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:11.5px;font-weight:700;background:var(--surface)}
+.scene[aria-current="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.scene[aria-current="true"] .sn{background:var(--gold);border-color:var(--gold);color:#15161A}
+.a-scene{flex:1;display:flex;flex-direction:column;gap:10px;animation:in .35s ease;position:relative}
+.a-cap{font-size:11.5px;line-height:1.4;background:var(--screen-ink);color:var(--screen);border-radius:8px;padding:8px 10px}
+.a-cap b{color:var(--gold)}
+.otp span.fill{border-color:var(--screen-ink);font-size:22px}
+.a-edit{font-size:11px;font-weight:700;color:var(--gold);align-self:center}
+.a-dash{position:relative;display:grid;grid-template-columns:70px 1fr;gap:8px;min-height:260px}
+.a-side{display:flex;flex-direction:column;gap:7px;font-size:10px;color:var(--screen-muted);border-right:1px solid var(--screen-line);padding-right:6px}
+.a-side b{color:var(--screen-ink);font-size:11px;letter-spacing:.06em}
+.a-side .on{color:var(--screen-ink);font-weight:700}
+.a-main{display:grid;gap:8px;align-content:start}
+.a-skel{height:34px;border-radius:8px;background:var(--screen-line)}
+.a-skel.s2{height:60px;opacity:.7}.a-skel.s3{height:90px;opacity:.5}
+.a-modal{position:absolute;left:8%;right:8%;top:6px;background:var(--screen);border:1px solid var(--screen-line);border-radius:14px;padding:12px;display:grid;gap:8px;box-shadow:0 14px 40px -12px rgba(0,0,0,.45)}
+.a-modal .card{max-width:190px;justify-self:center;width:100%}
+.pop{animation:pop .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.a-check{width:52px;height:52px;border-radius:50%;background:var(--ok);display:grid;place-items:center}
+.a-end{flex:1;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;background:#15161A;color:#EDEDEA;border-radius:10px;padding:26px 16px;min-height:240px}
+.a-end p{margin:0;font-family:var(--f-display);font-weight:600;font-size:15px;line-height:1.35}
+.a-end span{font-size:11.5px;color:#D9B45A}
+.brandmark{width:44px;height:44px;border-radius:12px;border:1.5px solid #D9B45A;color:#D9B45A;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:20px}
+@media (prefers-reduced-motion:reduce){.a-scene,.pop{animation:none}}
+
+/* help */
+.help{margin-top:40px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:28px}
+h3{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0 0 12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 16px;margin-bottom:8px}
+summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";font-family:var(--f-display);color:var(--muted)}
+details[open] summary::after{content:"–"}
+details ul{margin:0 0 14px;padding-left:18px;color:var(--muted)}
+.support{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.support p{margin:0 0 12px;color:var(--muted);font-size:15px}
+.copyrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.copyrow code{font-family:var(--f-mono);font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;user-select:all}
+.done-banner{margin-top:14px;background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:14px 16px;font-weight:600}
+.src{margin-top:32px;font-size:13px;color:var(--muted)}
+.src a{color:var(--muted)}
+
+@media (max-width:880px){
+  .main{grid-template-columns:1fr}
+  .devicewrap{position:static;order:-1}
+  .help{grid-template-columns:1fr}
+  .stages{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:620px){
+  .stages{grid-template-columns:1fr}
+  .phone{width:250px}
+  .panel{padding:18px}
+}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#D9B45A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span>Manual del usuario Jeeves <span class="pill" style="margin-left:4px;font-family:var(--f-body);letter-spacing:0">Solicitud de tarjeta</span></div>
+      <h1>Tu app y tu tarjeta Jeeves, paso a paso</h1>
+      <p class="lede">Configura la app en tu celular, solicita tu tarjeta, pide el envío y actívala si es física, y aprende a gestionarla. Marca cada paso cuando lo completes; tu avance queda guardado en este navegador.</p>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="lbl"><span>Tu avance</span><b id="pct">0 de 18 pasos</b></div>
+      <div class="bar"><i id="barfill"></i></div>
+    </div>
+  </header>
+
+  <div class="prereq">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+    <div><strong>Antes de empezar:</strong> ya debes haber aceptado la invitación que te llegó por correo y creado tu usuario y contraseña en la plataforma web de Jeeves. Si aún no lo haces, busca el correo de invitación (revisa spam) y complétalo primero.</div>
+  </div>
+
+  <div class="stages" role="tablist" id="stages"></div>
+
+  <div class="main">
+    <section class="panel" id="panel" aria-live="polite"></section>
+    <aside class="devicewrap">
+      <div class="kind" id="kind">En tu celular</div>
+      <div id="device"></div>
+      <div class="caption">Ilustración de referencia. Las pantallas reales pueden verse un poco distintas.</div>
+    </aside>
+  </div>
+
+  <section class="help" id="ayuda">
+    <div>
+      <h3>¿Algo no funcionó?</h3>
+      <details><summary>No me llegó el código de verificación</summary><ul><li>Revisa tu carpeta de spam o correo no deseado.</li><li>Confirma que escribiste el mismo correo con el que te registraste en Jeeves.</li></ul></details>
+      <details><summary>El ingreso con huella o Face ID no funciona</summary><ul><li>Verifica que tu celular tenga configurada la huella o el reconocimiento facial.</li><li>Vuelve a activar el inicio biométrico en los ajustes de la app.</li></ul></details>
+      <details><summary>Olvidé mi contraseña</summary><ul><li>En la pantalla de inicio de sesión toca la opción para restablecer contraseña.</li></ul></details>
+      <details><summary>¿Dónde veo el estado de mi solicitud de tarjeta?</summary><ul><li>En la plataforma web, entra a <b>Tarjetas</b> → <b>Mis solicitudes</b>. Ahí verás si está pendiente de aprobación o ya fue aprobada.</li><li>Si lleva mucho tiempo pendiente, escríbele a tu administrador.</li></ul></details>
+      <details><summary>¿Puedo pedir la tarjeta World Elite?</summary><ul><li>La World Elite es exclusiva para personas autorizadas por la compañía. Si crees que deberías tenerla, consúltalo con tu administrador antes de solicitarla.</li></ul></details>
+      <details><summary>No veo el aviso para solicitar el envío de mi tarjeta</summary><ul><li>Ve a la sección Tarjetas de la plataforma web y busca tu tarjeta física.</li><li>Si no aparece, escríbele a tu administrador o a soporte.</li></ul></details>
+      <details><summary>Mi tarjeta aparece congelada y no la puedo descongelar</summary><ul><li>Si la congeló un administrador, verás un aviso en la app y solo esa persona puede descongelarla. Escríbele a tu administrador.</li></ul></details>
+      <details><summary>No veo los datos de mi tarjeta física en la app</summary><ul><li>Es normal: por ahora la app solo muestra los datos de las tarjetas virtuales.</li></ul></details>
+      <details><summary>¿Cómo pido una tarjeta virtual adicional desde la app?</summary><ul>
+        <li>Entra a <b>Tarjetas</b> y toca <b>Solicitar tarjeta</b> → <b>Tarjeta virtual</b>.</li>
+        <li>Escribe el nombre, el límite y la frecuencia del límite (mensual, semanal, diaria o de por vida).</li>
+        <li>Agrega la fecha de inicio y fin, el motivo y, si quieres, un archivo de soporte. Toca <b>Solicitar</b>.</li>
+        <li>La solicitud queda en <b>Mis solicitudes</b> con estado “Necesita autorización” hasta que tu administrador la apruebe. Desde ahí puedes editarla o cancelarla.</li></ul></details>
+      <details><summary>¿Cómo pido una tarjeta nueva (física o virtual) desde la plataforma web?</summary><ul>
+        <li>Solo puedes hacerlo si tu administrador te dio permiso para crear tarjetas. Si no ves la opción <b>Crear tarjeta</b>, pídesela a tu administrador.</li>
+        <li>Inicia sesión, selecciona <b>Crear tarjeta</b> y elige <b>Virtual</b> o <b>Física</b>.</li>
+        <li>Ponle un nombre, define el límite de gasto y el intervalo del límite.</li>
+        <li>Si es física, ingresa la dirección de entrega y crea tu PIN. Si es virtual, revisa los detalles y confirma.</li>
+        <li>La tarjeta física llega en unos 7 a 10 días hábiles y debes activarla al recibirla.</li></ul></details>
+    </div>
+    <div class="support">
+      <h3>Soporte Jeeves</h3>
+      <p><strong>Chat en vivo</strong> (la vía más rápida): inicia sesión en la app o en tryjeeves.com y toca el ícono de chat en la esquina inferior derecha.</p>
+      <p><strong>Correo</strong>, de lunes a viernes, de 8:00 a 18:00:</p>
+      <div class="copyrow"><code id="mail">soporte@tryjeeves.com</code><button class="btn" id="copy" type="button">Copiar</button></div>
+      <div class="links">
+        <a class="lnk" href="https://jeeves.zendesk.com/hc/es-001/categories/16961252090897--Jeeves-Mobile" target="_blank" rel="noopener">Centro de ayuda: Jeeves Mobile ↗</a>
+        <a class="lnk" href="https://www.youtube.com/watch?v=Zx42DFlmxSE" target="_blank" rel="noopener">Video: guía para navegar la plataforma ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="src">Contenido basado en los artículos del Centro de Ayuda de Jeeves (Jeeves Mobile, Verificación de identidad, Administra tus tarjetas, Crea y gestiona tus tarjetas) y en los videos “¿Cómo pedir tus nuevas tarjetas Mastercard con Jeeves?” y “Solicita y aprueba una tarjeta”.</p>
+</div>
+
+<script>
+(function(){
+const phone = (body)=>`<div class="phone"><div class="screen"><div class="sbar"><span>9:41</span><span>●●● ▮</span></div><div class="scontent">${body}</div></div></div>`;
+const web = (url, body)=>`<div class="browser"><div class="chrome"><i></i><i></i><i></i><span>${url}</span></div><div class="screen"><div class="scontent">${body}</div></div></div>`;
+const cardArt = (label, last, frozen)=>`<div class="card${frozen?' frozen':''}"><div style="display:flex;justify-content:space-between"><b>JEEVES</b><span>${label}</span></div><div class="num">•••• •••• •••• ${last}</div><div style="display:flex;justify-content:space-between"><span>ANA MARÍA RÍOS</span><span>mastercard</span></div>${frozen?'<div class="ice">Congelada</div>':''}</div>`;
+const WICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:1px"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>`;
+const VNOTE = `<strong>¿Tu tarjeta es virtual?</strong> No necesitas solicitar envío ni activación. Solo ingresa a la app Jeeves Mobile, abre tu tarjeta y dale clic al botón <b>Añadir a Apple Wallet</b> o <b>Añadir a Google Pay</b>. ¡Listo! Ya puedes usarla de inmediato.`;
+const B = (t)=>`<span class="btnname">${t}</span>`;
+
+const STAGES = [
+ {id:'app', title:'Configura tu app', sub:'5 pasos · 5 min'},
+ {id:'solicitud', title:'Solicita tu tarjeta', sub:'4 pasos · plataforma web', note:VNOTE},
+ {id:'fisica', title:'Solicita el envío y activa tu tarjeta', sub:'4 pasos · solo tarjeta física', note:'<strong>Esta etapa es solo para tarjetas físicas.</strong> Si solicitaste una tarjeta virtual, no necesitas envío ni activación: ingresa a la app, abre tu tarjeta y dale clic a <b>Añadir a Apple Wallet</b> o <b>Añadir a Google Pay</b>. Ya puedes usarla de inmediato.'},
+ {id:'gestion', title:'Gestiona tu tarjeta', sub:'5 pasos · en la app'}
+];
+
+const STEPS = [
+ // Etapa 1
+ {st:0, title:'Descarga la app Jeeves Mobile', intro:'Búscala en la tienda de tu celular como “Jeeves Mobile”.',
+  do:[`Abre App Store (iPhone) o Google Play (Android).`,`Busca <b>Jeeves Mobile</b> e instálala.`,`Ábrela cuando termine la descarga.`],
+  links:[['App Store','https://apps.apple.com/us/app/jeeves-mobile/id1512121216'],['Google Play','https://play.google.com/store/apps/details?id=com.app.jeeves']],
+  screen:()=>phone(`<p class="s-sub">Tienda de apps</p><div style="display:flex;gap:12px;align-items:center"><div style="width:56px;height:56px;border-radius:14px;background:#15161A;display:grid;place-items:center;color:#D9B45A;font-weight:800;font-family:var(--f-display)">J</div><div><b style="font-size:15px">Jeeves Mobile</b><p class="s-sub">Finanzas · Jeeves Inc.</p></div></div><div class="s-btn tap">Instalar</div><div class="s-field">Gestiona tarjetas, recibos y transacciones desde tu celular.</div>`)},
+ {st:0, title:'Ingresa tu correo de Jeeves', intro:'Usa exactamente el mismo correo con el que aceptaste la invitación y te registraste en la plataforma.',
+  do:[`En la pantalla de inicio escribe tu correo corporativo.`,`Toca ${B('Continuar')}. Te enviaremos un código de verificación a ese correo.`],
+  screen:()=>phone(`<p class="s-h">Bienvenido a Jeeves</p><p class="s-sub">Ingresa el correo asociado a tu cuenta</p><div class="s-field"><small>Correo</small>ana.rios@tuempresa.com</div><div class="s-btn tap">Continuar</div>`)},
+ {st:0, title:'Escribe el código y tu contraseña', intro:'Revisa tu bandeja de entrada: el código llega en segundos.',
+  do:[`Copia el código que te llegó al correo y escríbelo en la app.`,`Luego ingresa la contraseña que creaste en la plataforma.`,`Toca ${B('Iniciar sesión')}.`],
+  notes:[['tip','¿No llegó el código? Revisa spam y confirma que escribiste bien tu correo.']],
+  screen:()=>phone(`<p class="s-h">Revisa tu correo</p><p class="s-sub">Enviamos un código a ana.rios@tuempresa.com</p><div class="otp"><span>4</span><span>8</span><span>1</span><span>0</span><span class="f">|</span><span></span></div><div class="s-field"><small>Contraseña</small>••••••••••</div><div class="s-btn tap">Iniciar sesión</div>`)},
+ {st:0, title:'Activa el ingreso con huella o Face ID', intro:'Es opcional, pero te ahorra escribir la contraseña cada vez que abras la app.',
+  do:[`Cuando la app te lo pregunte, acepta el inicio de sesión biométrico.`,`Si lo omitiste, puedes activarlo después en los ajustes de la app.`],
+  screen:()=>phone(`<p class="s-h">Entra más rápido</p><p class="s-sub">Usa tu rostro o huella para abrir Jeeves</p><div style="display:grid;place-items:center;padding:16px 0"><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M9 10v1M15 10v1M12 10v3h-1M9.5 16a4 4 0 0 0 5 0"/></svg></div><div class="s-row"><span>Face ID / huella</span><span class="toggle on"></span></div><div class="s-btn">Activar</div>`)},
+ {st:0, title:'Activa notificaciones y verifica tu identidad', intro:'Jeeves usa la app como segundo factor de seguridad. Cada vez que entres a la plataforma web o hagas una acción importante (pagar, crear tarjetas, invitar usuarios), te llegará una solicitud al celular.',
+  do:[`Permite las notificaciones de la app cuando te lo pida.`,`Cuando aparezca la ventana de verificación en la plataforma web, abre la app en tu celular.`,`Toca ${B('Confirm')} para aprobar el ingreso.`],
+  notes:[['tip','Mantén la app actualizada a la última versión. Si prefieres, también puedes verificar con Google Authenticator (código de 6 dígitos).']],
+  screen:()=>phone(`<p class="s-sub" style="text-align:center;margin-top:18px">Lunes, 28 de septiembre</p><p style="text-align:center;font-family:var(--f-display);font-size:40px;font-weight:600;margin:0">9:41</p><div class="push"><div style="display:flex;justify-content:space-between"><b>Jeeves</b><span class="s-sub">ahora</span></div><p style="margin:6px 0 10px">¿Eres tú? Confirma tu inicio de sesión en la plataforma web.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="s-btn ghost">Deny</div><div class="s-btn gold tap">Confirm</div></div></div>`)},
+
+ // Etapa 2
+ {st:1, title:'Mira cómo se solicita tu tarjeta', intro:'Esta animación de unos 40 segundos muestra cómo pedir tu tarjeta en la plataforma web. Se reproduce sola; toca cualquier escena para ir directo a ella.',
+  anim:'req',
+  notes:[['tip','La animación recrea el video oficial de Jeeves “Solicita y aprueba una tarjeta”. Los textos exactos de la plataforma pueden variar un poco.']],
+  screen:()=>web('app.tryjeeves.com',`<div id="animscreen" style="display:contents"></div>`)},
+ {st:1, title:'Elige el tipo de tarjeta', intro:'Desde la plataforma web en tu computador inicias la solicitud de tu tarjeta.',
+  do:[`Inicia sesión en la plataforma web de Jeeves y aprueba el ingreso desde tu app.`,`En el menú de la izquierda, entra a ${B('Tarjetas')}.`,`Haz clic en ${B('Solicitar nueva tarjeta')} para iniciar una solicitud para ti.`,`Elige el tipo de tarjeta que necesitas:<br>• <b>Tarjeta física estándar</b>: sin anualidad, ideal para compras en tiendas físicas. Limitada a una por usuario.<br>• <b>Tarjeta virtual</b>: sin anualidad, ideal para compras en línea y suscripciones. Puedes crear tantas como necesites.<br>• <b>Tarjeta World Elite</b>: exclusiva para personas autorizadas por la compañía.`],
+  notes:[['warn','La tarjeta <strong>World Elite</strong> es exclusiva para personas autorizadas por la compañía. Si no tienes esa autorización, elige la física estándar o la virtual.']],
+  screen:()=>{const sel='v'; return web('app.tryjeeves.com/cards',`<p class="s-h">Solicitar Tarjeta</p><p class="s-sub">¿Qué tipo de tarjeta necesita?</p><div class="opt"><span class="thumb phys"></span><span><b>Tarjeta física estándar</b><ul><li>Sin anualidad</li><li>Ideal para compras en tiendas físicas</li><li>Limitada a una tarjeta por usuario</li></ul></span></div><div class="opt${sel==='v'?' sel':''}"><span class="thumb virt"></span><span><b>Tarjeta virtual</b><ul><li>Sin anualidad</li><li>Ideal para compras online y suscripciones</li><li>Crea tantas como necesites</li></ul></span></div><div class="opt"><span class="thumb we"></span><span><b>Tarjeta World Elite<span class="wepill">Exclusiva</span></b><ul><li>Solo para personas autorizadas por la compañía</li></ul></span></div>`);}},
+ {st:1, title:'Completa los datos de tu solicitud', intro:'Entre más clara sea tu solicitud, más fácil es para la persona que la aprueba.',
+  do:[`<b>Nombre de la tarjeta</b>: te ayuda a clasificar tus gastos (por ejemplo, “Gastos de viaje”).`,`<b>Límite de gasto</b> (COP): cuánto se podrá usar con esta tarjeta.`,`<b>Frecuencia</b>: cada cuánto se reinicia el límite (diario, semanal, mensual o de por vida).`,`<b>Fecha de inicio y finalización</b>: desde y hasta cuándo estará activa la tarjeta.`,`<b>Motivo de la solicitud</b>: explica para qué la necesitas, así quien la aprueba entiende el contexto.`,`Si quieres, <b>adjunta un documento</b> de soporte y haz clic en ${B('Solicitar Tarjeta')}.`],
+  notes:[['tip','La tarjeta empieza a funcionar a las 12:00 a. m. (UTC) de la fecha de inicio y queda activa hasta las 11:59 p. m. (UTC) de la fecha de finalización. Las compras después de esa fecha se rechazan.']],
+  screen:()=>web('app.tryjeeves.com/cards/new',`<p class="s-h">Tarjeta virtual</p><div class="s-field"><small>Nombre de la tarjeta</small>Gastos de viaje</div><div class="s-field" style="display:flex;justify-content:space-between"><span><small>Límite de gasto</small>$ 1.000.000</span><span class="s-sub" style="align-self:end">COP</span></div><div class="s-field"><small>Frecuencia</small>Mensual ▾</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="s-field"><small>Fecha de inicio</small>01/11/2026</div><div class="s-field"><small>Finalización</small>30/11/2026</div></div><div class="s-field"><small>Motivo de la solicitud</small>Necesito realizar un viaje</div><div class="s-btn tap">Solicitar Tarjeta →</div>`)},
+ {st:1, title:'Espera la aprobación', intro:'Tu solicitud queda pendiente de aprobación. Cuando la aprueben, te llega un aviso y la tarjeta aparece en tu menú principal.',
+  do:[`Sigue el estado de tu solicitud en ${B('Tarjetas')} → ${B('Mis solicitudes')}.`,`<b>Si pediste una tarjeta virtual</b>: apenas la aprueben, ábrela en la app y añádela a tu billetera. Puedes saltarte la Etapa 3.`,`<b>Si pediste una tarjeta física</b> (estándar o World Elite): continúa con la Etapa 3 para solicitar su envío y activarla.`],
+  screen:()=>web('app.tryjeeves.com/cards',`<div style="display:flex;gap:12px;font-size:12px;border-bottom:1px solid var(--screen-line);padding-bottom:6px"><span class="s-sub">Mis tarjetas</span><b>Mis solicitudes</b></div><div class="s-row"><div><b>Gastos de viaje</b><p class="s-sub">Virtual · $1.000.000 / mes</p></div><span class="pill w">Pendiente de aprobación</span></div><div style="display:grid;place-items:center;gap:6px;text-align:center;padding:10px 0"><div class="a-check" style="background:var(--gold)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15161A" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><p class="s-sub">Te avisaremos cuando tu solicitud sea aprobada</p></div>`)},
+
+ // Etapa 3
+ {st:2, title:'Mira cómo se solicita el envío de tu tarjeta', intro:'Una vez aprobada tu tarjeta física, esta animación de unos 30 segundos muestra cómo confirmar su envío en la plataforma web. Se reproduce sola; toca cualquier escena para ir directo a ella.',
+  anim:'ship',
+  notes:[['tip','La animación recrea el video oficial de Jeeves, en español. Los textos exactos de la plataforma pueden variar un poco.']],
+  screen:()=>web('app.tryjeeves.com',`<div id="animscreen" style="display:contents"></div>`)},
+ {st:2, title:'Solicita el envío de tu tarjeta física', intro:'Cuando aprueban tu solicitud de tarjeta física, te llega un aviso y la tarjeta aparece en tu menú principal. Solo falta confirmar el envío desde la plataforma web en tu computador.',
+  do:[`Inicia sesión en la plataforma web de Jeeves y aprueba el ingreso desde tu app.`,`Haz clic en el aviso de tu tarjeta física. Si no lo ves, ve a ${B('Tarjetas')} y abre tu tarjeta física.`,`Haz clic en ${B('Ordenar')}.`,`Crea tu <b>PIN de 4 dígitos</b> y confírmalo. Lo vas a necesitar para comprar, así que memorízalo.`,`Revisa la dirección de envío y tus datos. Si todo está bien, haz clic en ${B('Ordenar')} otra vez.`],
+  screen:()=>web('app.tryjeeves.com/cards',`<p class="s-h">Revisa tu pedido</p><div class="s-field"><small>Tarjeta</small>Física · Mastercard</div><div class="s-field"><small>PIN</small>•••• <span class="pill" style="margin-left:6px">Confirmado</span></div><div class="s-field"><small>Dirección de envío</small>Cra. 11 # 93-45, Of. 502 · Bogotá</div><div class="s-btn tap">Ordenar</div>`)},
+ {st:2, title:'Espera la entrega de tu tarjeta', intro:'Tu tarjeta física se envía a la dirección que confirmaste en el pedido.',
+  do:[`La entrega local suele tardar de <b>7 a 10 días hábiles</b>. En algunas regiones puede tardar hasta 2 semanas.`,`Cuando la recibas, actívala en el siguiente paso antes de usarla.`],
+  notes:[['warn','En Colombia no se hacen envíos internacionales: la dirección debe ser nacional.']],
+  screen:()=>web('app.tryjeeves.com/cards',`<p class="s-h">¡Tu tarjeta va en camino!</p>${cardArt('Física','••••')}<div class="s-row"><span>Pedido recibido</span><span class="pill">Listo</span></div><div class="s-row"><span>En envío</span><span class="pill w">7–10 días hábiles</span></div><div class="s-row"><span>Activación</span><span class="s-sub">Pendiente</span></div>`)},
+ {st:2, title:'Activa tu tarjeta física al recibirla', intro:'En Colombia, México, Brasil y Canadá la tarjeta física llega bloqueada y debes activarla tú.',
+  do:[`Inicia sesión en la plataforma de Jeeves.`,`Haz clic en ${B('Activar tarjeta')}.`,`Escribe los <b>últimos 4 dígitos</b> impresos en tu tarjeta y confirma.`],
+  notes:[['tip','Listo: tu tarjeta queda activa para comprar con el PIN que creaste.']],
+  screen:()=>web('app.tryjeeves.com',`<p class="s-h">Activar tarjeta</p><p class="s-sub">Ingresa los últimos 4 dígitos de tu tarjeta física</p>${cardArt('Física','7 2 1 9')}<div class="otp"><span>7</span><span>2</span><span>1</span><span class="f">9</span></div><div class="s-btn tap">Activar tarjeta</div>`)},
+
+ // Etapa 4
+ {st:3, title:'Entra a tus tarjetas', intro:'Hay dos formas de llegar a tus tarjetas en la app.',
+  do:[`Desliza la pantalla principal hacia la izquierda, o`,`Toca el botón ${B('Tarjetas')} en la esquina superior derecha.`,`Verás la lista de tus tarjetas, el saldo disponible según su límite y su estado (activa o congelada). Puedes buscar por nombre o número.`],
+  screen:()=>phone(`<div style="display:flex;justify-content:space-between;align-items:center"><p class="s-h" style="margin:0">Tarjetas</p><span class="s-sub">Buscar</span></div><div class="s-row"><div><b>Viajes comerciales</b><p class="s-sub">Física •••• 7219</p></div><div style="text-align:right"><b>$1.850.000</b><br><span class="pill">Activa</span></div></div><div class="s-row"><div><b>Software</b><p class="s-sub">Virtual •••• 3302</p></div><div style="text-align:right"><b>$420.000</b><br><span class="pill">Activa</span></div></div><div class="s-row"><div><b>Eventos</b><p class="s-sub">Virtual •••• 8841</p></div><div style="text-align:right"><b>$0</b><br><span class="pill w">Congelada</span></div></div><p class="s-sub">Saldo disponible según el límite de cada tarjeta (COP)</p>`)},
+ {st:3, title:'Consulta los datos de tu tarjeta virtual', intro:'Útil para comprar en línea: copia y pega los datos en la página donde pagas.',
+  do:[`Selecciona tu tarjeta virtual en la lista.`,`Toca ${B('Mostrar detalles')}.`,`Copia el número, la fecha y el código de seguridad.`],
+  notes:[['warn','Por ahora la app no muestra los datos de la tarjeta física.']],
+  screen:()=>phone(`<p class="s-h">Software</p><div class="card"><div style="display:flex;justify-content:space-between"><b>JEEVES</b><span>Virtual</span></div><div class="num">5412 7700 1934 3302</div><div style="display:flex;justify-content:space-between"><span>VENCE 09/29 · CVC 418</span><span>mastercard</span></div></div><div class="s-btn ghost">Copiar número</div><div class="s-row"><span>Transacciones (30 días)</span><b>12</b></div><div class="s-row"><span>Sin recibo</span><span class="pill w">3</span></div>`)},
+ {st:3, title:'Agrégala a Apple Pay o Google Pay', intro:'Paga con tu celular. Funciona con tarjetas virtuales, físicas y World Elite, y está disponible en Colombia.',
+  do:[`Ve a ${B('Tarjetas')} y elige la tarjeta.`,`Toca ${B('Agregar a Billetera')} y sigue las instrucciones de tu celular.`],
+  screen:()=>phone(`<p class="s-h">Viajes comerciales</p>${cardArt('Física','7219')}<div class="s-btn tap" style="display:flex;justify-content:center;gap:8px;align-items:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Agregar a Billetera</div><p class="s-sub" style="text-align:center">Apple Wallet · Google Pay</p>`)},
+ {st:3, title:'Congela tu tarjeta si algo no cuadra', intro:'Si ves una transacción sospechosa o perdiste la tarjeta, bloquéala al instante. La desbloqueas igual de fácil.',
+  do:[`Abre la tarjeta en la sección ${B('Tarjetas')}.`,`Activa la opción ${B('Congelar')}. El estado cambia a congelada.`,`Para usarla de nuevo, desactiva la opción.`],
+  notes:[['warn','Si un administrador congeló tu tarjeta, verás un aviso y solo esa persona puede descongelarla.']],
+  screen:()=>phone(`<p class="s-h">Viajes comerciales</p>${cardArt('Física','7219',true)}<div class="s-row tap"><span>Congelar tarjeta</span><span class="toggle on" style="margin-right:4px"></span></div><div class="s-row"><span>Editar nombre</span><span class="s-sub">›</span></div><div class="s-row"><span>Reemplazar tarjeta física</span><span class="s-sub">›</span></div>`)},
+ {st:3, title:'Sube recibos y pide reembolsos', intro:'Toma la foto del recibo apenas pagues, así no se te acumulan transacciones sin soporte.',
+  do:[`Entra a ${B('Reembolsos')} y toca ${B('+ Crear')}.`,`Toca ${B('Subir recibo')} y elige tomar foto, agregar foto o agregar archivo.`,`Verifica que el recibo se vea bien, completa los datos y envía la solicitud.`],
+  screen:()=>phone(`<p class="s-h">Crear reembolso</p><div class="s-field" style="display:grid;place-items:center;padding:20px;border-style:dashed"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="s-sub">Subir recibo</span></div><div class="s-row"><span>Tomar una foto</span><span class="s-sub">›</span></div><div class="s-row"><span>Agregar una foto</span><span class="s-sub">›</span></div><div class="s-row"><span>Agregar un archivo</span><span class="s-sub">›</span></div><div class="s-btn">Enviar para revisión</div>`)}
+];
+
+// ---- Animación: pedido de tarjeta física ----
+const pinBoxes=(n,label)=>`<div class="otp">${[0,1,2,3].map(k=>`<span class="${k<n?'fill':''}${k===n?' f':''}">${k<n?'•':''}</span>`).join('')}</div>`;
+const SCENES=[
+ {cap:'Al iniciar sesión verás el aviso de tu tarjeta física. Haz clic en <b>Solicitar envío</b>.', dur:4200,
+  draw:()=>`<div class="a-dash"><div class="a-side"><b>JEEVES</b><span>Inicio</span><span class="on">Tarjetas</span><span>Pagos</span><span>Reembolsos</span></div><div class="a-main"><div class="a-skel"></div><div class="a-skel s2"></div><div class="a-skel s3"></div></div><div class="a-modal pop"><p class="s-h" style="font-size:15px">Tu tarjeta física está lista</p><p class="s-sub">Confirma el envío y te la mandamos a tu dirección.</p>${cardArt('Física','••••')}<div class="s-btn tap">Solicitar envío</div></div></div>`},
+ {cap:'En la pantalla de envío, haz clic en <b>Ordenar</b>.', dur:3800,
+  draw:()=>`<p class="s-h">Envío de tu tarjeta física</p><p class="s-sub">Mastercard corporativa Jeeves</p>${cardArt('Física','••••')}<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="s-btn ghost">Más tarde</div><div class="s-btn tap">Ordenar</div></div>`},
+ {cap:'Crea tu <b>PIN de 4 dígitos</b>. Lo usarás en cada compra, así que memorízalo.', dur:4600, typing:4,
+  draw:(n)=>`<p class="s-h">Crea tu PIN</p><p class="s-sub">4 dígitos que solo tú conozcas</p>${pinBoxes(n)}<div class="s-btn${n>=4?' tap':''}" style="${n<4?'opacity:.45':''}">Continuar</div>`},
+ {cap:'Escribe el PIN otra vez para <b>confirmarlo</b>.', dur:4600, typing:4,
+  draw:(n)=>`<p class="s-h">Confirma tu PIN</p><p class="s-sub">Escríbelo de nuevo</p>${pinBoxes(n)}<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="s-btn ghost">Atrás</div><div class="s-btn${n>=4?' tap':''}" style="${n<4?'opacity:.45':''}">Continuar</div></div>`},
+ {cap:'Revisa tu correo y la <b>dirección de envío</b>. Si algo está mal, toca Editar. Si todo está bien, haz clic en <b>Ordenar</b>.', dur:5200,
+  draw:()=>`<p class="s-h">Revisa tu pedido</p><div class="s-field" style="display:flex;justify-content:space-between;gap:8px"><span><small>Correo</small>ana.rios@tuempresa.com</span><span class="a-edit">Editar</span></div><div class="s-field" style="display:flex;justify-content:space-between;gap:8px"><span><small>Dirección de envío</small>Cra. 11 # 93-45, Of. 502<br>Bogotá, Colombia</span><span class="a-edit">Editar</span></div><div class="s-field"><small>PIN</small>•••• <span class="pill" style="margin-left:6px">Confirmado</span></div><div class="s-btn tap">Ordenar</div>`},
+ {cap:'¡Listo! Tu tarjeta va en camino. Llega en unos <b>7 a 10 días hábiles</b>.', dur:4200,
+  draw:()=>`<div style="display:grid;place-items:center;gap:6px;text-align:center"><div class="a-check pop"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="s-h">¡Tu tarjeta va en camino!</p><p class="s-sub">Te avisaremos por correo cuando se envíe</p></div>${cardArt('Física','••••')}`},
+ {cap:'Cuando la recibas, <b>actívala</b> con los últimos 4 dígitos de la tarjeta.', dur:4400,
+  draw:()=>`<div class="a-end"><div class="brandmark">J</div><p>Cuando recibas tu tarjeta, actívala en la plataforma con los últimos 4 dígitos.</p><span>Siguiente paso: activar tu tarjeta</span></div>`}
+];
+
+// ---- Animación: solicitud de tarjeta ----
+const typed=(t,n)=>t.slice(0,n)+(n<t.length?'<span style="color:var(--gold)">|</span>':'');
+const NAME='Gastos de viaje';
+const SCENES_REQ=[
+ {cap:'En la plataforma web, entra a <b>Tarjetas</b> en el menú de la izquierda.', dur:3800,
+  draw:()=>`<div class="a-dash"><div class="a-side"><b>JEEVES</b><span>Inicio</span><span>Bandeja</span><span>Transacciones</span><span class="on tap" style="padding-right:30px">Tarjetas</span><span>Reembolsos</span><span>Viaje</span></div><div class="a-main"><p class="s-sub">Buenas noches, Ana</p><div class="a-skel s2"></div><div class="a-skel s3"></div></div></div>`},
+ {cap:'Haz clic en <b>Solicitar nueva tarjeta</b> para iniciar una solicitud para ti.', dur:4000,
+  draw:()=>`<p class="s-h">Tarjetas</p><div class="s-field tap" style="box-shadow:0 0 0 1px var(--screen-ink)"><b>Solicitar nueva tarjeta</b><small>Crea una nueva solicitud de tarjeta para ti</small></div><div class="s-field"><b>Solicitar un aumento del límite</b><small>Permanente o temporal</small></div><div style="display:flex;gap:12px;font-size:12px"><b>Mis tarjetas</b><span class="s-sub">Mis solicitudes</span></div><p class="s-sub" style="text-align:center;padding:14px 0">Aún no tienes tarjetas para mostrar</p>`},
+ {cap:'Elige el tipo: <b>física estándar</b>, <b>virtual</b> o <b>World Elite</b> (exclusiva para personas autorizadas por la compañía).', dur:5600,
+  draw:()=>{const sel='v'; return `<p class="s-h">Solicitar Tarjeta</p><p class="s-sub">¿Qué tipo de tarjeta necesita?</p><div class="opt"><span class="thumb phys"></span><span><b>Tarjeta física estándar</b><ul><li>Sin anualidad</li><li>Ideal para compras en tiendas físicas</li><li>Limitada a una tarjeta por usuario</li></ul></span></div><div class="opt${sel==='v'?' sel':''}"><span class="thumb virt"></span><span><b>Tarjeta virtual</b><ul><li>Sin anualidad</li><li>Ideal para compras online y suscripciones</li><li>Crea tantas como necesites</li></ul></span></div><div class="opt"><span class="thumb we"></span><span><b>Tarjeta World Elite<span class="wepill">Exclusiva</span></b><ul><li>Solo para personas autorizadas por la compañía</li></ul></span></div>`;}},
+ {cap:'Ponle un <b>nombre</b> a la tarjeta. Te ayuda a clasificar tus gastos.', dur:5200, typing:NAME.length,
+  draw:(n)=>`<p class="s-h">Tarjeta virtual</p><div class="s-field" style="border-color:var(--screen-ink)"><small>Nombre de la tarjeta</small>${typed(NAME,n)||'&nbsp;'}</div><p class="s-sub">Por ejemplo: gastos de viaje, software, eventos</p><div class="s-field"><small>Límite de gasto</small><span class="s-sub">$ Establece un límite · COP</span></div><div class="s-field"><small>Frecuencia</small>Mensual ▾</div>`},
+ {cap:'Define el <b>límite de gasto</b> y cada cuánto se reinicia. Con <b>Mensual</b>, el límite se restablece cada mes.', dur:5200,
+  draw:()=>`<p class="s-h">Tarjeta virtual</p><div class="s-field"><small>Nombre de la tarjeta</small>${NAME}</div><div class="s-field" style="display:flex;justify-content:space-between;border-color:var(--screen-ink)"><span><small>Límite de gasto</small>$ 1.000.000</span><span class="s-sub" style="align-self:end">COP</span></div><div class="dd pop"><div>Diario</div><div>Semanal</div><div class="on">Mensual ✓</div><div>De por vida</div></div>`},
+ {cap:'Elige la <b>fecha de inicio y finalización</b>: el periodo en que la tarjeta estará activa.', dur:4400,
+  draw:()=>`<p class="s-h">Fecha de inicio y finalización</p><p class="s-sub">Activa desde las 12:00 a. m. (UTC) del inicio hasta las 11:59 p. m. (UTC) del final.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="s-field tap" style="border-color:var(--screen-ink)"><small>Fecha de inicio</small>01/11/2026</div><div class="s-field"><small>Finalización</small>30/11/2026</div></div>`},
+ {cap:'Explica el <b>motivo</b> de la solicitud y, si quieres, <b>adjunta un documento</b> de soporte.', dur:4800,
+  draw:()=>`<p class="s-h">Detalles de la solicitud</p><div class="s-field" style="min-height:54px;border-color:var(--screen-ink)"><small>Motivo de la solicitud</small>Necesito realizar un viaje</div><div class="upl">☁︎<br><b>Haz clic aquí para subir</b> o arrastra y suelta</div>`},
+ {cap:'Haz clic en <b>Solicitar Tarjeta</b>. Tu solicitud queda <b>pendiente de aprobación</b>.', dur:4600,
+  draw:()=>`<div style="display:grid;place-items:center;gap:6px;text-align:center;padding-top:8px"><div class="a-check pop"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="s-h">¡Solicitud enviada!</p><p class="s-sub">Queda pendiente de aprobación</p></div><div class="s-row"><div><b>${NAME}</b><p class="s-sub">Virtual · $1.000.000 / mes</p></div><span class="pill w">Pendiente</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="s-btn ghost">Cancelar</div><div class="s-btn">Solicitar Tarjeta →</div></div>`},
+ {cap:'Cuando la aprueben: si es <b>virtual</b>, añádela a tu billetera desde la app y úsala de inmediato. Si es <b>física</b>, sigue con la Etapa 3.', dur:5200,
+  draw:()=>`<div class="a-end"><div class="brandmark">J</div><p>¿Virtual? Añádela a Apple Wallet o Google Pay desde la app y úsala de inmediato.</p><span>¿Física? Siguiente: solicitar envío y activar</span></div>`}
+];
+const ANIMS={ship:{sc:SCENES,yt:'https://www.youtube.com/watch?v=Urtjf3AomXs&list=PLvdiVN086QWugLELl6_EbigOnxojZHYYF&index=2'},req:{sc:SCENES_REQ}};
+let SC=SCENES;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const A={i:0,playing:!reduced,timer:null,tick:null,t0:0,elapsed:0};
+function stopAnim(){ clearTimeout(A.timer); clearInterval(A.tick); A.timer=A.tick=null; }
+function drawScene(n){
+  const el=document.getElementById('animscreen'); if(!el) return;
+  const sc=SC[A.i];
+  el.innerHTML=`<div class="a-scene">${sc.draw(n==null?(sc.typing||0):n)}</div><div class="a-cap">${sc.cap}</div>`;
+}
+function paintUI(){
+  document.querySelectorAll('[data-seg]').forEach(s=>{const k=+s.dataset.seg; const i=s.querySelector('i'); i.style.transition='none'; i.style.width = k<A.i?'100%':'0%';});
+  document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-current', +b.dataset.scene===A.i?'true':'false'));
+  const t=document.getElementById('atime'); if(t) t.textContent=`${A.i+1} / ${SC.length}`;
+  const p=document.getElementById('aplay'); if(p){p.textContent=A.playing?'Pausar':(A.i===SC.length-1&&A.elapsed>=SC[A.i].dur?'Reproducir':'Reproducir');}
+}
+function runScene(){
+  stopAnim(); paintUI();
+  const sc=SC[A.i];
+  const cur=document.querySelector(`[data-seg="${A.i}"] i`);
+  if(!A.playing){ drawScene(); if(cur) cur.style.width=(A.elapsed/sc.dur*100)+'%'; return; }
+  const remaining=sc.dur-A.elapsed;
+  if(cur){ cur.style.width=(A.elapsed/sc.dur*100)+'%'; void cur.offsetWidth; cur.style.transition=`width ${remaining}ms linear`; cur.style.width='100%'; }
+  A.t0=performance.now()-A.elapsed;
+  if(sc.typing){
+    let last=-1;
+    const step=()=>{ const e=performance.now()-A.t0; const n=Math.min(sc.typing,Math.floor((e-500)/450)+1); const v=Math.max(0,n); if(v!==last){last=v; drawScene(v);} };
+    step(); A.tick=setInterval(step,120);
+  } else drawScene();
+  A.timer=setTimeout(()=>{ A.elapsed=0; if(A.i<SC.length-1){A.i++; runScene();} else { A.playing=false; A.elapsed=sc.dur; stopAnim(); paintUI(); } }, remaining);
+}
+function startAnim(k){ SC=ANIMS[k].sc; A.i=0; A.elapsed=0; A.playing=!reduced; bindAnim(); runScene(); }
+function bindAnim(){
+  const p=document.getElementById('aplay'), r=document.getElementById('areplay');
+  if(p) p.onclick=()=>{
+    if(A.playing){ A.elapsed=Math.min(SC[A.i].dur, performance.now()-A.t0); A.playing=false; runScene(); }
+    else { if(A.i===SC.length-1&&A.elapsed>=SC[A.i].dur){A.i=0;A.elapsed=0;} A.playing=true; runScene(); }
+  };
+  if(r) r.onclick=()=>{ A.i=0; A.elapsed=0; A.playing=true; runScene(); };
+  document.querySelectorAll('[data-scene]').forEach(b=>b.onclick=()=>{ A.i=+b.dataset.scene; A.elapsed=0; runScene(); });
+}
+
+const KEY='jeeves-manual-solicitud-v1';
+let state={cur:0,done:[]};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&Array.isArray(s.done)) state=s;}catch(e){}
+if(state.cur<0||state.cur>=STEPS.length) state.cur=0;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const isDone=i=>state.done.includes(i);
+
+const $=id=>document.getElementById(id);
+
+function renderStages(){
+  const cur=STEPS[state.cur].st;
+  $('stages').innerHTML=STAGES.map((s,i)=>{
+    const idx=STEPS.map((x,j)=>x.st===i?j:-1).filter(j=>j>=0);
+    const all=idx.every(isDone);
+    return `<button class="stage${all?' done':''}" role="tab" aria-selected="${i===cur}" data-stage="${i}" id="stage-${s.id}"><span class="n">${all?'✓':i+1}</span><span class="t"><b>${s.title}</b><span>${s.sub}</span></span></button>`;
+  }).join('');
+}
+
+function renderPanel(){
+  const i=state.cur, s=STEPS[i], st=s.st;
+  const idx=STEPS.map((x,j)=>x.st===st?j:-1).filter(j=>j>=0);
+  const pos=idx.indexOf(i)+1;
+  let h=`<div class="steplist" aria-label="Pasos de esta etapa">${idx.map((j,k)=>`<button class="dot${isDone(j)?' done':''}" data-go="${j}" ${j===i?'aria-current="step"':''} aria-label="Paso ${k+1}">${isDone(j)&&j!==i?'✓':k+1}</button>`).join('')}</div>`;
+  h+=`<p class="eyebrow">Etapa ${st+1} · Paso ${pos} de ${idx.length}</p><h2>${s.title}</h2><p class="intro">${s.intro}</p>`;
+  if(STAGES[st].note) h+=`<div class="note info">${WICON}<span>${STAGES[st].note}</span></div>`;
+  if(s.anim){ const AN=ANIMS[s.anim], L=AN.sc; h+=`<div class="player"><div class="pctl"><button class="btn primary" id="aplay" type="button" aria-label="Pausar">Pausar</button><button class="btn" id="areplay" type="button">Ver de nuevo</button><span class="ptime" id="atime">1 / ${L.length}</span></div>
+    <div class="ptrack" aria-hidden="true">${L.map((_,k)=>`<span data-seg="${k}"><i></i></span>`).join('')}</div>
+    <ol class="scenes">${L.map((sc,k)=>`<li><button type="button" class="scene" data-scene="${k}"><span class="sn">${k+1}</span><span>${sc.cap}</span></button></li>`).join('')}</ol></div>`;
+    if(AN.yt) h+=`<p class="note tip" style="margin-top:0">¿Prefieres el video original (en inglés, 59 s)? <a href="${AN.yt}" target="_blank" rel="noopener"><strong>Ver en YouTube ↗</strong></a></p>`; }
+  if(s.do) h+=`<ol class="do">${s.do.map(d=>`<li><span>${d}</span></li>`).join('')}</ol>`;
+  if(s.links) h+=`<div class="links">${s.links.map(([t,u])=>`<a class="lnk" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')}</div>`;
+  if(s.notes) h+=s.notes.map(([k,t])=>`<p class="note ${k}"><span>${t}</span></p>`).join('');
+  h+=`<div class="foot"><label class="check"><input type="checkbox" id="chk-${i}" ${isDone(i)?'checked':''}> Ya hice este paso</label><div class="nav"><button class="btn" id="prev" type="button" ${i===0?'disabled':''}>Anterior</button><button class="btn primary" id="next" type="button">${i===STEPS.length-1?'Terminar':'Siguiente'}</button></div></div>`;
+  if(state.done.length===STEPS.length) h+=`<div class="done-banner">¡Listo! Tu app está configurada, ya solicitaste tu tarjeta y sabes gestionarla.</div>`;
+  $('panel').innerHTML=h;
+  $('kind').textContent = s.screen().startsWith('<div class="browser"') ? 'En la plataforma web' : 'En tu celular';
+  $('device').innerHTML=s.screen();
+  if(s.anim) startAnim(s.anim); else stopAnim();
+  $('chk-'+i).addEventListener('change',e=>{toggle(i,e.target.checked)});
+  $('prev').addEventListener('click',()=>go(i-1));
+  $('next').addEventListener('click',()=>{ if(!isDone(i)) toggle(i,true,true); if(i<STEPS.length-1) go(i+1); else render(); });
+}
+
+function renderProgress(){
+  const n=state.done.length;
+  $('pct').textContent=`${n} de ${STEPS.length} pasos`;
+  $('barfill').style.width=(n/STEPS.length*100)+'%';
+}
+function toggle(i,on,silent){
+  state.done=state.done.filter(x=>x!==i); if(on) state.done.push(i);
+  save(); if(!silent) render(); else {renderStages();renderProgress();}
+}
+function go(i){ if(i<0||i>=STEPS.length) return; state.cur=i; save(); render(); }
+function render(){ renderStages(); renderPanel(); renderProgress(); }
+
+document.addEventListener('click',e=>{
+  const st=e.target.closest('[data-stage]'); if(st){ const k=+st.dataset.stage; const first=STEPS.findIndex(x=>x.st===k); const pending=STEPS.findIndex((x,j)=>x.st===k&&!isDone(j)); go(pending>=0?pending:first); return; }
+  const d=e.target.closest('[data-go]'); if(d){ go(+d.dataset.go); }
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea')) return;
+  if(e.key==='ArrowRight') go(state.cur+1);
+  if(e.key==='ArrowLeft') go(state.cur-1);
+});
+$('copy').addEventListener('click',()=>{
+  const txt=$('mail').textContent, b=$('copy');
+  const sel=()=>{const r=document.createRange();r.selectNodeContents($('mail'));const s=getSelection();s.removeAllRanges();s.addRange(r);};
+  try{ navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1600)}).catch(sel);}catch(e){sel();}
+});
+render();
+})();
+</script>
+
+</body>
+</html>
